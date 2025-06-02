@@ -119,8 +119,11 @@
         const res = await fetch(url);
         const data = await res.json();
         document.getElementById("mensagem").textContent = data.mensagem;
+        document.getElementById("mensagem").style.color =
+          data.status === "Sucesso" ? "#0d283d" : "#ff0000";
       } catch (err) {
         document.getElementById("mensagem").textContent = "Erro ao enviar dados.";
+        document.getElementById("mensagem").style.color = "#ff0000";
       }
     }
 
