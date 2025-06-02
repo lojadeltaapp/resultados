@@ -52,12 +52,10 @@
 </head>
 <body>
   <div class="container">
-    <h2>Lançamento</h2>
+    <h2 id="titulo">Lançamento - <span id="nomeLoja"></span></h2>
 
     <label for="loja">Loja:</label>
-    <select id="loja">
-      <option>Carregando lojas...</option>
-    </select>
+    <input type="text" id="loja" disabled />
 
     <label for="tipo">Tipo:</label>
     <select id="tipo">
@@ -69,65 +67,61 @@
     <input type="number" id="valor" step="0.01" placeholder="Digite o valor" />
 
     <button onclick="enviar()">Enviar</button>
-
     <p id="mensagem"></p>
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const scriptId = params.get("id");
+    const scriptUrls = {
+      padaria: "https://script.google.com/macros/s/AKfycbzk73qusZV_ksCW79lquKcDT9W7kPhGXDBZa7UoSiGvOG3WipKgJMPq15YHPc6g18eEXQ/exec",
+      cerquilho: "https://script.google.com/macros/s/AKfycbabc456/exec",
+      salto: "https://script.google.com/macros/s/AKfycbdef789/exec"
+    };
 
-    if (!scriptId) {
-      document.getElementById("mensagem").textContent = "ID do script não informado na URL.";
-      throw new Error("ID do script ausente.");
-    }
+    const urlParams = new URLSearchParams(window.location.search);
+    const loja = urlParams.get("loja");
+    const scriptUrl = scriptUrls[loja];
 
-    const scriptUrl = `https://script.google.com/macros/s/${scriptId}/exec`;
+    document.getElementById("loja").value = loja || "";
+    document.getElementById("nomeLoja").textContent = loja ? loja.toUpperCase() : "";
 
-    async function carregarLojas() {
-      try {
-        const res = await fetch(`${scriptUrl}?action=lojas`);
-        const data = await res.json();
-
-        const select = document.getElementById("loja");
-        select.innerHTML = "";
-
-        data.lojas.forEach(loja => {
-          const option = document.createElement("option");
-          option.value = loja;
-          option.textContent = loja;
-          select.appendChild(option);
-        });
-      } catch (err) {
-        document.getElementById("mensagem").textContent = "Erro ao carregar lojas.";
-      }
+    if (!scriptUrl) {
+      document.getElementById("mensagem").textContent = "Loja não reconhecida.";
+      throw new Error("Loja inválida ou não configurada.");
     }
 
     async function enviar() {
-      const loja = document.getElementById("loja").value;
       const tipo = document.getElementById("tipo").value;
       const valor = document.getElementById("valor").value;
+      const msg = document.getElementById("mensagem");
 
-      if (!loja || !tipo || !valor) {
-        document.getElementById("mensagem").textContent = "Preencha todos os campos.";
+      if (!valor) {
+        msg.textContent = "Preencha o valor.";
+        msg.style.color = "#f44336";
         return;
       }
 
-      const url = `${scriptUrl}?action=registrar&loja=${encodeURIComponent(loja)}&tipo=${tipo}&valor=${valor}`;
+      msg.textContent = "Enviando dados...";
+      msg.style.color = "#0d283d";
 
       try {
+        const lojaNome = loja;
+        const url = `${scriptUrl}?action=registrar&loja=${encodeURIComponent(lojaNome)}&tipo=${tipo}&valor=${valor}`;
         const res = await fetch(url);
         const data = await res.json();
-        document.getElementById("mensagem").textContent = data.mensagem;
-        document.getElementById("mensagem").style.color =
-          data.status === "Sucesso" ? "#0d283d" : "#ff0000";
-      } catch (err) {
-        document.getElementById("mensagem").textContent = "Erro ao enviar dados.";
-        document.getElementById("mensagem").style.color = "#ff0000";
-      }
-    }
 
-    carregarLojas();
+        msg.textContent = data.mensagem;
+        msg.style.color = data.status === "Sucesso" ? "#0d283d" : "#f44336";
+
+        if (data.status === "Sucesso") {
+          document.getElementById("valor").value = "";
+        }
+      } catch (err) {
+        msg.textContent = "Erro ao enviar dados.";
+        msg.style.color = "#f44336";
+      }
+
+      setTimeout(() => { msg.textContent = ""; }, 3000);
+    }
   </script>
 </body>
 </html>
