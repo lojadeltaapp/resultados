@@ -2,83 +2,243 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Lançamento de Venda / Quebra</title>
+  <title>Sistema de Lançamento</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 20px;
-      background: #f4f4f4;
-      display: flex;
-      justify-content: center;
-    }
-    .container {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0px 4px 10px rgba(0,0,0,0.2);
-      width: 100%;
-      max-width: 400px;
-    }
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    label {
-      margin-top: 10px;
-      display: block;
-      font-weight: bold;
-    }
-    select, input, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      font-size: 1em;
+    * {
+      margin: 0;
+      padding: 0;
       box-sizing: border-box;
     }
-    button {
-      margin-top: 15px;
-      background-color: #2c3e50;
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f5f7fa;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: #ffffff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      width: 100%;
+      max-width: 450px;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #eaeaea;
+      padding-bottom: 20px;
+    }
+
+    .header h2 {
+      color: #2c3e50;
+      font-size: 1.8rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .header p {
+      color: #7f8c8d;
+      font-size: 0.95rem;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      position: relative;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      color: #34495e;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    .input-icon {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #95a5a6;
+      z-index: 1;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 14px 16px 14px 42px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      background: #fff;
+      color: #2c3e50;
+      transition: border-color 0.2s;
+    }
+
+    select {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%2395a5a6' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+      background-position: right 12px center;
+      background-repeat: no-repeat;
+      background-size: 16px;
+      padding-right: 45px;
+    }
+
+    #valor {
+      font-weight: 500;
+      font-size: 1.1rem;
+      color: #27ae60;
+    }
+
+    select:focus, input:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+
+    select:hover, input:hover {
+      border-color: #bdc3c7;
+    }
+
+    .btn-submit {
+      width: 100%;
+      padding: 16px;
+      background: #2c3e50;
       color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
       cursor: pointer;
-    }
-    button:hover {
-      background-color: #34495e;
-    }
-    #mensagem {
+      transition: background-color 0.2s;
       margin-top: 15px;
-      text-align: center;
-      font-weight: bold;
     }
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
+
+    .btn-submit:hover {
+      background: #1a252f;
+    }
+
+    .message {
+      margin-top: 20px;
+      padding: 14px;
+      border-radius: 8px;
+      text-align: center;
+      font-weight: 500;
+      opacity: 0;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+    }
+
+    .message.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .message.success {
+      background: #27ae60;
+      color: white;
+    }
+
+    .message.error {
+      background: #e74c3c;
+      color: white;
+    }
+
+    .message.info {
+      background: #3498db;
+      color: white;
+    }
+
+    /* Responsividade */
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px;
+        margin: 10px;
+      }
+      
+      .header h2 {
+        font-size: 1.5rem;
+      }
+      
+      select, input {
+        padding: 12px 14px 12px 38px;
+      }
+    }
+
+    /* Loading overlay */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.85);
+      border-radius: 10px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .loading-overlay.show {
+      display: flex;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2>Lançamento</h2>
+    <div class="loading-overlay" id="loadingOverlay">
+      <div style="text-align: center;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 1.8rem; color: #2c3e50; margin-bottom: 10px;"></i>
+        <p style="color: #2c3e50; font-weight: 500;">Carregando...</p>
+      </div>
+    </div>
 
-    <label for="loja">Loja:</label>
-    <select id="loja">
-      <option>Carregando lojas...</option>
-    </select>
+    <div class="header">
+      <h2><i class="fas fa-chart-line"></i> Sistema de Lançamento</h2>
+      <p>Registre vendas e quebras de forma rápida</p>
+    </div>
 
-    <label for="tipo">Tipo:</label>
-    <select id="tipo">
-      <option value="VENDA">Venda</option>
-      <option value="QUEBRA">Quebra</option>
-    </select>
+    <form id="lancamentoForm">
+      <div class="form-group">
+        <label for="loja"><i class="fas fa-store"></i> Loja</label>
+        <select id="loja" required>
+          <option>Carregando lojas...</option>
+        </select>
+      </div>
 
-    <label for="valor">Valor:</label>
-    <input type="number" id="valor" step="0.01" placeholder="Digite o valor" />
+      <div class="form-group">
+        <label for="tipo"><i class="fas fa-tags"></i> Tipo de Operação</label>
+        <select id="tipo" required>
+          <option value="VENDA">💰 Venda</option>
+          <option value="QUEBRA">📉 Quebra</option>
+        </select>
+      </div>
 
-    <button onclick="enviar()">Enviar</button>
+      <div class="form-group">
+        <label for="valor"><i class="fas fa-money-bill-wave"></i> Valor</label>
+        <div class="input-wrapper">
+          <i class="fas fa-dollar-sign input-icon"></i>
+          <input type="text" id="valor" placeholder="0,00" required />
+        </div>
+      </div>
 
-    <p id="mensagem"></p>
+      <button type="submit" class="btn-submit">
+        <span class="btn-text">Registrar Lançamento</span>
+      </button>
+    </form>
+
+    <div id="mensagem" class="message"></div>
   </div>
 
   <script>
@@ -86,34 +246,78 @@
     const scriptId = params.get("id");
 
     if (!scriptId) {
-      document.getElementById("mensagem").textContent = "ID do script não informado na URL.";
+      showMessage("ID do script não informado na URL.", "error");
       throw new Error("ID do script ausente.");
     }
 
     const scriptUrl = `https://script.google.com/macros/s/${scriptId}/exec`;
 
-    // Função para usar JSONP como alternativa ao fetch
-    function jsonpRequest(url, callback) {
-      const script = document.createElement('script');
-      const callbackName = 'callback_' + Math.random().toString(36).substring(7);
+    // Formatação de moeda brasileira
+    function formatarMoeda(valor) {
+      // Remove tudo que não é dígito
+      valor = valor.replace(/\D/g, '');
       
-      window[callbackName] = function(data) {
-        callback(null, data);
-        document.head.removeChild(script);
-        delete window[callbackName];
-      };
+      // Converte para número e divide por 100 para ter centavos
+      valor = (parseInt(valor) / 100).toFixed(2) + '';
       
-      script.onerror = function() {
-        callback(new Error('JSONP request failed'));
-        document.head.removeChild(script);
-        delete window[callbackName];
-      };
+      // Substitui o ponto por vírgula
+      valor = valor.replace('.', ',');
       
-      script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
-      document.head.appendChild(script);
+      // Adiciona pontos para milhares
+      valor = valor.replace(/(\d)(?=(\d{3})+(?!\d))/g, '$1.');
+      
+      return valor;
+    }
+
+    // Converter moeda formatada para número
+    function moedaParaNumero(valor) {
+      return parseFloat(valor.replace(/\./g, '').replace(',', '.'));
+    }
+
+    // Event listener para formatação automática
+    document.getElementById('valor').addEventListener('input', function(e) {
+      let valor = e.target.value;
+      
+      // Formata o valor
+      e.target.value = formatarMoeda(valor);
+    });
+
+    // Previne caracteres não numéricos
+    document.getElementById('valor').addEventListener('keypress', function(e) {
+      if (!/[\d]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
+        e.preventDefault();
+      }
+    });
+
+    function showMessage(text, type = 'info') {
+      const msgElement = document.getElementById('mensagem');
+      msgElement.textContent = text;
+      msgElement.className = `message ${type}`;
+      msgElement.classList.add('show');
+      
+      setTimeout(() => {
+        msgElement.classList.remove('show');
+      }, 5000);
+    }
+
+    function showLoading(show = true) {
+      const overlay = document.getElementById('loadingOverlay');
+      const btn = document.querySelector('.btn-submit');
+      
+      if (show) {
+        overlay.classList.add('show');
+        btn.disabled = true;
+        btn.textContent = 'Processando...';
+      } else {
+        overlay.classList.remove('show');
+        btn.disabled = false;
+        btn.textContent = 'Registrar Lançamento';
+      }
     }
 
     async function carregarLojas() {
+      showLoading(true);
+      
       try {
         // Tentar fetch primeiro
         try {
@@ -128,12 +332,14 @@
           console.log('Fetch falhou, tentando método alternativo...');
         }
 
-        // Se fetch falhar, usar navegação direta (método mais simples)
+        // Se fetch falhar, usar navegação direta
         window.location.href = `${scriptUrl}?action=lojas&redirect=${encodeURIComponent(window.location.href)}`;
         
       } catch (err) {
         console.error('Erro:', err);
-        document.getElementById("mensagem").textContent = "Erro ao carregar lojas. Verifique se o script está publicado corretamente.";
+        showMessage("Erro ao carregar lojas. Verifique se o script está publicado corretamente.", "error");
+      } finally {
+        showLoading(false);
       }
     }
 
@@ -146,6 +352,12 @@
         return;
       }
 
+      // Adiciona opção padrão
+      const defaultOption = document.createElement("option");
+      defaultOption.value = "";
+      defaultOption.textContent = "Selecione uma loja...";
+      select.appendChild(defaultOption);
+
       lojas.forEach(loja => {
         if (loja && loja.toString().trim()) {
           const option = document.createElement("option");
@@ -156,26 +368,33 @@
       });
     }
 
-    async function enviar() {
+    // Event listener para o formulário
+    document.getElementById('lancamentoForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      
       const loja = document.getElementById("loja").value;
       const tipo = document.getElementById("tipo").value;
-      const valor = document.getElementById("valor").value;
+      const valorFormatado = document.getElementById("valor").value;
 
-      if (!loja || !tipo || !valor) {
-        document.getElementById("mensagem").textContent = "Preencha todos os campos.";
+      if (!loja || !tipo || !valorFormatado) {
+        showMessage("Preencha todos os campos.", "error");
         return;
       }
 
       if (loja === "Carregando lojas..." || loja === "Nenhuma loja encontrada") {
-        document.getElementById("mensagem").textContent = "Selecione uma loja válida.";
+        showMessage("Selecione uma loja válida.", "error");
         return;
       }
 
-      // Mostrar estado de carregamento
-      const button = document.querySelector('button');
-      const container = document.querySelector('.container');
-      button.textContent = 'Enviando...';
-      container.classList.add('loading');
+      // Converte o valor formatado para número
+      const valor = moedaParaNumero(valorFormatado);
+      
+      if (isNaN(valor) || valor <= 0) {
+        showMessage("Digite um valor válido.", "error");
+        return;
+      }
+
+      showLoading(true);
 
       const url = `${scriptUrl}?action=registrar&loja=${encodeURIComponent(loja)}&tipo=${tipo}&valor=${valor}`;
 
@@ -187,7 +406,13 @@
             mode: 'cors'
           });
           const data = await res.json();
-          document.getElementById("mensagem").textContent = data.mensagem || data.status;
+          showMessage(data.mensagem || data.status, data.status === "Sucesso" ? "success" : "error");
+          
+          if (data.status === "Sucesso") {
+            // Limpa o formulário
+            document.getElementById("valor").value = "";
+            document.getElementById("loja").selectedIndex = 0;
+          }
         } catch (fetchError) {
           console.log('Fetch falhou, redirecionando...');
           // Se fetch falhar, redirecionar para o script
@@ -196,22 +421,34 @@
         }
       } catch (err) {
         console.error('Erro:', err);
-        document.getElementById("mensagem").textContent = "Erro ao enviar dados. Tente novamente.";
+        showMessage("Erro ao enviar dados. Tente novamente.", "error");
       } finally {
-        // Restaurar estado normal
-        button.textContent = 'Enviar';
-        container.classList.remove('loading');
+        showLoading(false);
       }
-    }
+    });
 
     // Verificar se retornou de um redirecionamento
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('status')) {
-      document.getElementById("mensagem").textContent = 
-        decodeURIComponent(urlParams.get('mensagem') || urlParams.get('status'));
+      const status = urlParams.get('status');
+      const mensagem = decodeURIComponent(urlParams.get('mensagem') || status);
+      showMessage(mensagem, status === 'Sucesso' ? 'success' : 'error');
+      
+      // Limpa a URL
+      window.history.replaceState({}, document.title, window.location.pathname + '?id=' + scriptId);
     }
 
-    carregarLojas();
+    // Se há lojas nos parâmetros da URL (retorno do redirecionamento)
+    if (urlParams.get('lojas')) {
+      try {
+        const lojas = JSON.parse(decodeURIComponent(urlParams.get('lojas')));
+        preencherLojas(lojas);
+      } catch (e) {
+        carregarLojas();
+      }
+    } else {
+      carregarLojas();
+    }
   </script>
 </body>
 </html>
