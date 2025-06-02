@@ -34,6 +34,7 @@
       padding: 10px;
       margin-top: 5px;
       font-size: 1em;
+      box-sizing: border-box;
     }
     button {
       margin-top: 15px;
@@ -43,19 +44,28 @@
       border-radius: 5px;
       cursor: pointer;
     }
+    button:hover {
+      background-color: #34495e;
+    }
     #mensagem {
       margin-top: 15px;
       text-align: center;
       font-weight: bold;
     }
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h2 id="titulo">Lançamento - <span id="nomeLoja"></span></h2>
+    <h2>Lançamento</h2>
 
     <label for="loja">Loja:</label>
-    <input type="text" id="loja" disabled />
+    <select id="loja">
+      <option>Carregando lojas...</option>
+    </select>
 
     <label for="tipo">Tipo:</label>
     <select id="tipo">
@@ -67,61 +77,141 @@
     <input type="number" id="valor" step="0.01" placeholder="Digite o valor" />
 
     <button onclick="enviar()">Enviar</button>
+
     <p id="mensagem"></p>
   </div>
 
   <script>
-    const scriptUrls = {
-      padaria: "https://script.google.com/macros/s/AKfycbzk73qusZV_ksCW79lquKcDT9W7kPhGXDBZa7UoSiGvOG3WipKgJMPq15YHPc6g18eEXQ/exec",
-      cerquilho: "https://script.google.com/macros/s/AKfycbabc456/exec",
-      salto: "https://script.google.com/macros/s/AKfycbdef789/exec"
-    };
+    const params = new URLSearchParams(window.location.search);
+    const scriptId = params.get("id");
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const loja = urlParams.get("loja");
-    const scriptUrl = scriptUrls[loja];
-
-    document.getElementById("loja").value = loja || "";
-    document.getElementById("nomeLoja").textContent = loja ? loja.toUpperCase() : "";
-
-    if (!scriptUrl) {
-      document.getElementById("mensagem").textContent = "Loja não reconhecida.";
-      throw new Error("Loja inválida ou não configurada.");
+    if (!scriptId) {
+      document.getElementById("mensagem").textContent = "ID do script não informado na URL.";
+      throw new Error("ID do script ausente.");
     }
 
-    async function enviar() {
-      const tipo = document.getElementById("tipo").value;
-      const valor = document.getElementById("valor").value;
-      const msg = document.getElementById("mensagem");
+    const scriptUrl = `https://script.google.com/macros/s/${scriptId}/exec`;
 
-      if (!valor) {
-        msg.textContent = "Preencha o valor.";
-        msg.style.color = "#f44336";
+    // Função para usar JSONP como alternativa ao fetch
+    function jsonpRequest(url, callback) {
+      const script = document.createElement('script');
+      const callbackName = 'callback_' + Math.random().toString(36).substring(7);
+      
+      window[callbackName] = function(data) {
+        callback(null, data);
+        document.head.removeChild(script);
+        delete window[callbackName];
+      };
+      
+      script.onerror = function() {
+        callback(new Error('JSONP request failed'));
+        document.head.removeChild(script);
+        delete window[callbackName];
+      };
+      
+      script.src = url + (url.includes('?') ? '&' : '?') + 'callback=' + callbackName;
+      document.head.appendChild(script);
+    }
+
+    async function carregarLojas() {
+      try {
+        // Tentar fetch primeiro
+        try {
+          const res = await fetch(`${scriptUrl}?action=lojas`, {
+            method: 'GET',
+            mode: 'cors'
+          });
+          const data = await res.json();
+          preencherLojas(data.lojas);
+          return;
+        } catch (fetchError) {
+          console.log('Fetch falhou, tentando método alternativo...');
+        }
+
+        // Se fetch falhar, usar navegação direta (método mais simples)
+        window.location.href = `${scriptUrl}?action=lojas&redirect=${encodeURIComponent(window.location.href)}`;
+        
+      } catch (err) {
+        console.error('Erro:', err);
+        document.getElementById("mensagem").textContent = "Erro ao carregar lojas. Verifique se o script está publicado corretamente.";
+      }
+    }
+
+    function preencherLojas(lojas) {
+      const select = document.getElementById("loja");
+      select.innerHTML = "";
+
+      if (!lojas || lojas.length === 0) {
+        select.innerHTML = '<option>Nenhuma loja encontrada</option>';
         return;
       }
 
-      msg.textContent = "Enviando dados...";
-      msg.style.color = "#0d283d";
-
-      try {
-        const lojaNome = loja;
-        const url = `${scriptUrl}?action=registrar&loja=${encodeURIComponent(lojaNome)}&tipo=${tipo}&valor=${valor}`;
-        const res = await fetch(url);
-        const data = await res.json();
-
-        msg.textContent = data.mensagem;
-        msg.style.color = data.status === "Sucesso" ? "#0d283d" : "#f44336";
-
-        if (data.status === "Sucesso") {
-          document.getElementById("valor").value = "";
+      lojas.forEach(loja => {
+        if (loja && loja.toString().trim()) {
+          const option = document.createElement("option");
+          option.value = loja;
+          option.textContent = loja;
+          select.appendChild(option);
         }
-      } catch (err) {
-        msg.textContent = "Erro ao enviar dados.";
-        msg.style.color = "#f44336";
+      });
+    }
+
+    async function enviar() {
+      const loja = document.getElementById("loja").value;
+      const tipo = document.getElementById("tipo").value;
+      const valor = document.getElementById("valor").value;
+
+      if (!loja || !tipo || !valor) {
+        document.getElementById("mensagem").textContent = "Preencha todos os campos.";
+        return;
       }
 
-      setTimeout(() => { msg.textContent = ""; }, 3000);
+      if (loja === "Carregando lojas..." || loja === "Nenhuma loja encontrada") {
+        document.getElementById("mensagem").textContent = "Selecione uma loja válida.";
+        return;
+      }
+
+      // Mostrar estado de carregamento
+      const button = document.querySelector('button');
+      const container = document.querySelector('.container');
+      button.textContent = 'Enviando...';
+      container.classList.add('loading');
+
+      const url = `${scriptUrl}?action=registrar&loja=${encodeURIComponent(loja)}&tipo=${tipo}&valor=${valor}`;
+
+      try {
+        // Tentar fetch primeiro
+        try {
+          const res = await fetch(url, {
+            method: 'GET',
+            mode: 'cors'
+          });
+          const data = await res.json();
+          document.getElementById("mensagem").textContent = data.mensagem || data.status;
+        } catch (fetchError) {
+          console.log('Fetch falhou, redirecionando...');
+          // Se fetch falhar, redirecionar para o script
+          window.location.href = url + `&redirect=${encodeURIComponent(window.location.href)}`;
+          return;
+        }
+      } catch (err) {
+        console.error('Erro:', err);
+        document.getElementById("mensagem").textContent = "Erro ao enviar dados. Tente novamente.";
+      } finally {
+        // Restaurar estado normal
+        button.textContent = 'Enviar';
+        container.classList.remove('loading');
+      }
     }
+
+    // Verificar se retornou de um redirecionamento
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('status')) {
+      document.getElementById("mensagem").textContent = 
+        decodeURIComponent(urlParams.get('mensagem') || urlParams.get('status'));
+    }
+
+    carregarLojas();
   </script>
 </body>
 </html>
