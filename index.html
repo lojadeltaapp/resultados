@@ -85,6 +85,7 @@
       background: #fff;
       color: #2c3e50;
       transition: border-color 0.2s;
+      text-align: left;
     }
 
     select {
@@ -93,6 +94,13 @@
       background-repeat: no-repeat;
       background-size: 16px;
       padding-right: 45px;
+      text-align: left;
+      text-align-last: left;
+    }
+
+    select option {
+      text-align: left;
+      padding: 8px;
     }
 
     #valor {
@@ -229,7 +237,7 @@
         <label for="valor"><i class="fas fa-money-bill-wave"></i> Valor</label>
         <div class="input-wrapper">
           <i class="fas fa-dollar-sign input-icon"></i>
-          <input type="number" id="valor" placeholder="0,00" required />
+          <input type="tel" id="valor" placeholder="0,00" required />
         </div>
       </div>
 
@@ -278,15 +286,11 @@
     document.getElementById('valor').addEventListener('input', function(e) {
       let valor = e.target.value;
       
+      // Remove caracteres não numéricos
+      valor = valor.replace(/[^\d]/g, '');
+      
       // Formata o valor
       e.target.value = formatarMoeda(valor);
-    });
-
-    // Previne caracteres não numéricos
-    document.getElementById('valor').addEventListener('keypress', function(e) {
-      if (!/[\d]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
-        e.preventDefault();
-      }
     });
 
     function showMessage(text, type = 'info') {
